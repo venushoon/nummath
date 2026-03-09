@@ -2,271 +2,233 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>4학년 수학: 큰 수 마스터</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>초등 4학년 큰 수 마스터 v2</title>
     <style>
         :root {
-            --primary: #4a90e2;
-            --secondary: #f39c12;
-            --success: #2ecc71;
-            --danger: #e74c3c;
-            --bg: #f0f3f5;
+            --primary: #4a90e2; --secondary: #f39c12;
+            --success: #2ecc71; --danger: #e74c3c; --bg: #f8f9fa;
         }
-
         body {
-            font-family: 'Pretendard', sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg); margin: 0; overflow: hidden;
+            touch-action: manipulation; /* 터치 지연 방지 */
         }
+        .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; }
+        .active { display: flex; }
 
-        /* 메인 메뉴 */
-        #menu { text-align: center; }
-        .btn {
-            padding: 20px 40px;
-            font-size: 24px;
-            margin: 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 15px;
-            transition: transform 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .btn:active { transform: scale(0.95); }
-        .btn-blue { background-color: var(--primary); color: white; }
-        .btn-orange { background-color: var(--secondary); color: white; }
+        /* 설정 화면 스타일 */
+        .settings-box { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .option-group { margin: 20px 0; }
+        .opt-btn { padding: 10px 20px; margin: 5px; border: 2px solid #ddd; border-radius: 10px; cursor: pointer; background: white; font-weight: bold; }
+        .opt-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* 게임 화면 공통 */
-        .screen { display: none; width: 100%; height: 100vh; position: relative; }
-        .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* 게임 UI */
+        .timer-bar { width: 80%; height: 10px; background: #ddd; border-radius: 5px; margin: 10px 0; overflow: hidden; }
+        .timer-fill { height: 100%; background: var(--danger); width: 100%; transition: width 1s linear; }
+        
+        .question-box { background: white; padding: 25px; border-radius: 20px; margin-bottom: 20px; font-size: 32px; font-weight: 800; box-shadow: 0 5px 15px rgba(0,0,0,0.08); text-align: center; width: 80%; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%; }
+        .option-btn { padding: 20px 10px; font-size: 1.2rem; background: white; border: 2px solid #eee; border-radius: 15px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        
+        /* 정/오답 효과 */
+        .ans-correct { background-color: var(--success) !important; color: white; border-color: var(--success); transform: scale(1.05); }
+        .ans-wrong { background-color: var(--danger) !important; color: white; border-color: var(--danger); }
 
-        /* 문제 표시 영역 */
-        .question-box {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            margin-bottom: 30px;
-            font-size: 40px;
-            font-weight: bold;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            min-width: 300px;
-        }
+        /* 경쟁 모드 전용 */
+        .battle-layout { display: flex; width: 100%; height: 100%; }
+        .player-zone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 2px dashed #ccc; padding: 10px; position: relative; }
+        .score { font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
 
-        /* 보가 버튼 그리드 */
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            width: 90%;
-            max-width: 800px;
-        }
-        .option-btn {
-            padding: 25px;
-            font-size: 24px;
-            background: white;
-            border: 3px solid var(--primary);
-            border-radius: 15px;
-            cursor: pointer;
-        }
-        .option-btn:hover { background: #eef6ff; }
-
-        /* 2인 경쟁 모드 레이아웃 */
-        .battle-container {
-            display: flex;
-            width: 100%;
-            height: 100%;
-        }
-        .player-side {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-right: 2px dashed #ccc;
-            padding: 20px;
-        }
-        .player-side:last-child { border-right: none; }
-        .score-badge {
-            font-size: 30px;
-            margin-bottom: 10px;
-            color: var(--primary);
-        }
-
-        /* 피드백 애니메이션 */
-        .correct { background-color: var(--success) !important; color: white; }
-        .wrong { background-color: var(--danger) !important; color: white; }
+        .start-btn { padding: 20px 60px; font-size: 24px; background: var(--success); color: white; border: none; border-radius: 50px; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div id="menu" class="screen active">
-        <h1 style="font-size: 3rem;">🔢 큰 수 마스터!</h1>
-        <p style="font-size: 1.2rem; color: #666;">만 단위부터 억 단위까지 익혀봐요.</p>
-        <button class="btn btn-blue" onclick="startGame('single')">1인용 연습모드</button>
-        <button class="btn btn-orange" onclick="startGame('battle')">2인 경쟁모드</button>
+        <div class="settings-box">
+            <h1>🔢 큰 수 마스터 설정</h1>
+            <div class="option-group">
+                <p><strong>수 범위 선택</strong></p>
+                <button class="opt-btn selected" onclick="setLimit('man', this)">~만</button>
+                <button class="opt-btn" onclick="setLimit('eok', this)">~억</button>
+                <button class="opt-btn" onclick="setLimit('jo', this)">~조</button>
+            </div>
+            <div class="option-group">
+                <p><strong>제한 시간</strong></p>
+                <button class="opt-btn" onclick="setTime(30, this)">30초</button>
+                <button class="opt-btn selected" onclick="setTime(60, this)">60초</button>
+                <button class="opt-btn" onclick="setTime(0, this)">무제한</button>
+            </div>
+            <hr>
+            <button class="start-btn" onclick="initGame('single')">👤 1인 연습</button>
+            <button class="start-btn" style="background:var(--secondary)" onclick="initGame('battle')">👥 2인 경쟁</button>
+        </div>
     </div>
 
     <div id="single-game" class="screen">
-        <div class="score-badge">점수: <span id="s-score">0</span></div>
-        <div class="question-box" id="s-question">문제 생성중...</div>
+        <div class="score">점수: <span id="s-score">0</span> | 시간: <span id="s-timer-text">-</span></div>
+        <div class="timer-bar"><div id="s-timer-fill" class="timer-fill"></div></div>
+        <div class="question-box" id="s-question"></div>
         <div class="options-grid" id="s-options"></div>
-        <button class="btn" style="margin-top:40px;" onclick="location.reload()">처음으로</button>
     </div>
 
     <div id="battle-game" class="screen">
-        <div class="battle-container">
-            <div class="player-side" id="p1-side">
-                <div class="score-badge">A팀: <span id="p1-score">0</span></div>
-                <div class="question-box" id="p1-question">?</div>
-                <div class="options-grid" id="p1-options"></div>
+        <div class="battle-layout">
+            <div class="player-zone" id="p1-zone">
+                <div class="score">A팀: <span id="p1-score">0</span></div>
+                <div class="question-box" id="p1-question"></div>
+                <div id="p1-options" class="options-grid"></div>
             </div>
-            <div class="player-side" id="p2-side">
-                <div class="score-badge">B팀: <span id="p2-score">0</span></div>
-                <div class="question-box" id="p2-question">?</div>
-                <div class="options-grid" id="p2-options"></div>
+            <div class="player-zone" id="p2-zone">
+                <div class="score">B팀: <span id="p2-score">0</span></div>
+                <div class="question-box" id="p2-question"></div>
+                <div id="p2-options" class="options-grid"></div>
             </div>
         </div>
-        <button class="btn" style="position: absolute; bottom: 20px;" onclick="location.reload()">종료</button>
+        <div style="position:absolute; top:10px; font-weight:bold; background:white; padding:5px 15px; border-radius:20px;">
+            남은 시간: <span id="b-timer-text">-</span>
+        </div>
     </div>
 
     <script>
-        let score1 = 0;
-        let score2 = 0;
-        let singleScore = 0;
+        let config = { limit: 100000000, time: 60, mode: 'single' };
+        let gameState = { sScore: 0, p1Score: 0, p2Score: 0, timeLeft: 60, timerId: null };
 
-        // 수 읽기 변환 함수
+        function setLimit(type, btn) {
+            const limits = { 'man': 100000000, 'eok': 1000000000000, 'jo': 10000000000000000 };
+            config.limit = limits[type];
+            selectBtn(btn);
+        }
+
+        function setTime(sec, btn) {
+            config.time = sec;
+            selectBtn(btn);
+        }
+
+        function selectBtn(btn) {
+            Array.from(btn.parentElement.querySelectorAll('.opt-btn')).forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
         function numberToKorean(num) {
             const units = ['', '만', '억', '조'];
             const digits = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
             const tens = ['', '십', '백', '천'];
-            
-            let result = '';
-            let unitIdx = 0;
-            
-            while (num > 0) {
-                let chunk = num % 10000;
+            let result = ''; let unitIdx = 0;
+            let tempNum = num;
+            while (tempNum > 0) {
+                let chunk = tempNum % 10000;
                 let chunkStr = '';
                 let chunkArr = String(chunk).split('').reverse();
-                
                 for (let i = 0; i < chunkArr.length; i++) {
                     let d = parseInt(chunkArr[i]);
                     if (d !== 0) {
-                        let temp = digits[d] + tens[i];
-                        // '일십' -> '십' 처리 (단, 만/억 단위 시작 제외)
-                        if (temp === '일십') temp = '십';
-                        if (temp === '일백') temp = '백';
-                        if (temp === '일천') temp = '천';
-                        chunkStr = temp + chunkStr;
+                        let t = digits[d] + tens[i];
+                        if (t === '일십') t = '십'; if (t === '일백') t = '백'; if (t === '일천') t = '천';
+                        chunkStr = t + chunkStr;
                     }
                 }
-                
-                if (chunkStr !== '') {
-                    result = chunkStr + units[unitIdx] + result;
-                }
-                num = Math.floor(num / 10000);
-                unitIdx++;
+                if (chunkStr !== '') result = chunkStr + units[unitIdx] + result;
+                tempNum = Math.floor(tempNum / 10000); unitIdx++;
             }
             return result || '영';
         }
 
-        // 문제 생성기 (숫자 -> 읽기 혹은 읽기 -> 숫자)
-        function generateQuestion() {
-            // 4학년 수준: 10,000 ~ 99,999,999 (만 ~ 천만 단위)
-            const baseNum = Math.floor(Math.random() * 9000000) + 10000; 
+        function generateQuiz() {
+            const range = config.limit;
+            const min = range / 10000;
+            const num = Math.floor(Math.random() * (range - min)) + min;
             const isReadType = Math.random() > 0.5;
+            const question = isReadType ? num.toLocaleString('ko-KR') : numberToKorean(num);
+            const answer = isReadType ? numberToKorean(num) : num.toLocaleString('ko-KR');
             
-            const question = isReadType ? baseNum.toLocaleString() : numberToKorean(baseNum);
-            const answer = isReadType ? numberToKorean(baseNum) : baseNum.toLocaleString();
-            
-            // 오답 생성
             let options = [answer];
             while (options.length < 4) {
-                let offset = (Math.floor(Math.random() * 20) - 10) * 100;
-                let wrongNum = Math.abs(baseNum + offset);
-                let wrongOpt = isReadType ? numberToKorean(wrongNum) : wrongNum.toLocaleString();
-                if (!options.includes(wrongOpt) && wrongOpt !== "") options.push(wrongOpt);
+                let diff = (Math.floor(Math.random() * 20) - 10) * (range/100);
+                let wNum = Math.abs(num + diff);
+                let wOpt = isReadType ? numberToKorean(wNum) : wNum.toLocaleString('ko-KR');
+                if (!options.includes(wOpt) && wOpt !== "") options.push(wOpt);
             }
-            
-            return {
-                q: question,
-                a: answer,
-                options: options.sort(() => Math.random() - 0.5)
-            };
+            return { q: question, a: answer, opts: options.sort(() => Math.random() - 0.5) };
         }
 
-        // 게임 시작 핸들러
-        function startGame(mode) {
+        function initGame(mode) {
+            config.mode = mode;
+            gameState.timeLeft = config.time;
+            gameState.sScore = 0; gameState.p1Score = 0; gameState.p2Score = 0;
+            
             document.getElementById('menu').classList.remove('active');
-            if (mode === 'single') {
-                document.getElementById('single-game').classList.add('active');
-                nextQuestionSingle();
-            } else {
-                document.getElementById('battle-game').classList.add('active');
-                nextQuestionBattle(1);
-                nextQuestionBattle(2);
+            const screenId = mode === 'single' ? 'single-game' : 'battle-game';
+            document.getElementById(screenId).classList.add('active');
+
+            if (mode === 'single') renderQuiz('s');
+            else { renderQuiz('p1'); renderQuiz('p2'); }
+
+            if (config.time > 0) startTimer();
+            else { 
+                document.getElementById('s-timer-text').innerText = "무제한";
+                document.getElementById('b-timer-text').innerText = "무제한";
             }
         }
 
-        // 1인용 로직
-        function nextQuestionSingle() {
-            const data = generateQuestion();
-            const qEl = document.getElementById('s-question');
-            const optEl = document.getElementById('s-options');
-            
-            qEl.innerText = data.q;
-            optEl.innerHTML = '';
-            
-            data.options.forEach(opt => {
+        function renderQuiz(pid) {
+            const data = generateQuiz();
+            const qBox = document.getElementById(`${pid}-question`);
+            const oGrid = document.getElementById(`${pid}-options`);
+            qBox.innerText = data.q;
+            oGrid.innerHTML = '';
+
+            data.opts.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
                 btn.innerText = opt;
-                btn.onclick = () => {
-                    if (opt === data.a) {
-                        btn.classList.add('correct');
-                        singleScore += 10;
-                        document.getElementById('s-score').innerText = singleScore;
-                        setTimeout(nextQuestionSingle, 500);
-                    } else {
-                        btn.classList.add('wrong');
-                        setTimeout(() => btn.classList.remove('wrong'), 500);
-                    }
-                };
-                optEl.appendChild(btn);
+                // 전자칠판 동시 터치 대응을 위해 고유 이벤트 할당
+                btn.onclick = (e) => handleAnswer(pid, opt, data.a, e.target, oGrid);
+                oGrid.appendChild(btn);
             });
         }
 
-        // 2인용 로직
-        function nextQuestionBattle(playerNum) {
-            const data = generateQuestion();
-            const qEl = document.getElementById(`p${playerNum}-question`);
-            const optEl = document.getElementById(`p${playerNum}-options`);
-            
-            qEl.innerText = data.q;
-            optEl.innerHTML = '';
-            
-            data.options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if (opt === data.a) {
-                        btn.classList.add('correct');
-                        if(playerNum === 1) score1 += 10; else score2 += 10;
-                        document.getElementById(`p${playerNum}-score`).innerText = (playerNum === 1 ? score1 : score2);
-                        setTimeout(() => nextQuestionBattle(playerNum), 500);
-                    } else {
-                        btn.classList.add('wrong');
-                        setTimeout(() => btn.classList.remove('wrong'), 500);
-                    }
-                };
-                optEl.appendChild(btn);
-            });
+        function handleAnswer(pid, clicked, correct, btn, grid) {
+            if (grid.classList.contains('locked')) return; // 중복 클릭 방지
+            grid.classList.add('locked');
+
+            if (clicked === correct) {
+                btn.classList.add('ans-correct');
+                updateScore(pid, 10);
+                setTimeout(() => { grid.classList.remove('locked'); renderQuiz(pid); }, 600);
+            } else {
+                btn.classList.add('ans-wrong');
+                // 오답 시 정답 보여주기
+                Array.from(grid.children).forEach(b => {
+                    if (b.innerText === correct) b.classList.add('ans-correct');
+                });
+                setTimeout(() => { grid.classList.remove('locked'); renderQuiz(pid); }, 1500); // 정답 볼 시간 1.5초 부여
+            }
+        }
+
+        function updateScore(pid, points) {
+            if (pid === 's') { gameState.sScore += points; document.getElementById('s-score').innerText = gameState.sScore; }
+            else if (pid === 'p1') { gameState.p1Score += points; document.getElementById('p1-score').innerText = gameState.p1Score; }
+            else { gameState.p2Score += points; document.getElementById('p2-score').innerText = gameState.p2Score; }
+        }
+
+        function startTimer() {
+            const fill = document.getElementById('s-timer-fill');
+            gameState.timerId = setInterval(() => {
+                gameState.timeLeft--;
+                const txt = gameState.timeLeft + "초";
+                document.getElementById('s-timer-text').innerText = txt;
+                document.getElementById('b-timer-text').innerText = txt;
+                
+                if (fill) fill.style.width = (gameState.timeLeft / config.time * 100) + "%";
+
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerId);
+                    alert(`게임 종료!\n최종 점수: ${config.mode === 'single' ? gameState.sScore : 'A팀 '+gameState.p1Score+' : B팀 '+gameState.p2Score}`);
+                    location.reload();
+                }
+            }, 1000);
         }
     </script>
 </body>
